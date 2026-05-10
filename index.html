@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="iPreventivo">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>iPreventivo Deca Davide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --primary: #1a1a2e;
+    --accent: #e63946; --accent2: #457b9d; --text: #1a1a2e;
+    --muted: #8a8a9a; --border: #e0dfd8; --green: #2d6a4f;
+    --row-even: #fafaf8; --orange: #e07b39;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header {
+    background: var(--primary); color: white;
+    padding: 14px 20px 12px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+  header h1 { font-size: 1.1rem; font-weight: 700; }
+  header h1 span { color: #7eb8d4; }
+  header sub { font-size: 0.7rem; color: rgba(255,255,255,0.45); font-family: 'DM Mono', monospace; display: block; margin-top: 2px; }
+  .container { max-width: 700px; margin: 0 auto; padding: 14px; padding-bottom: 40px; }
+  .search-section { background: var(--surface); border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); border: 1px solid var(--border); }
+  .section-label { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 10px; }
+  .search-row { display: flex; gap: 8px; }
+  .search-wrapper { position: relative; flex: 1; }
+  .search-input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.93rem; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; }
+  .search-input:focus { border-color: var(--accent2); }
+  .qty-input { width: 68px; padding: 11px 8px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.92rem; font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); outline: none; text-align: center; }
+  .qty-input:focus { border-color: var(--accent2); }
+  .btn-add { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 11px 16px; font-size: 0.93rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .btn-add:active { opacity: 0.85; transform: scale(0.95); }
+  .suggestions { position: absolute; z-index: 300; background: white; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); border: 1px solid var(--border); max-height: 260px; overflow-y: auto; width: 100%; top: calc(100% + 4px); }
+  .suggestion-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 82px 1fr auto auto; gap: 6px; align-items: center; }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:active { background: #f0f4f8; }
+  .s-code { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+  .s-name { font-size: 0.83rem; }
+  .s-price { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--green); font-weight: 700; text-align: right; white-space: nowrap; }
+  .s-min { font-size: 0.69rem; color: var(--orange); text-align: right; white-space: nowrap; font-weight: 600; }
+  .preventivo-section { background: var(--surface); border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); border: 1px solid var(--border); }
+  .prev-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+  .btn-clear { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 4px 11px; font-size: 0.76rem; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-clear:active { border-color: var(--accent); color: var(--accent); }
+  .empty-state { text-align: center; padding: 28px 0; color: var(--muted); font-size: 0.88rem; }
+  .empty-state .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 700; padding: 6px 6px 8px; border-bottom: 2px solid var(--border); text-align: left; }
+  th.r, td.r { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:nth-child(even) { background: var(--row-even); }
+  tbody td { padding: 8px 6px; font-size: 0.82rem; vertical-align: middle; }
+  .td-code { font-family: 'DM Mono', monospace; font-size: 0.71rem; color: var(--accent); font-weight: 600; }
+  .td-total { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.83rem; color: var(--green); }
+  .td-price { font-family: 'DM Mono', monospace; font-size: 0.79rem; }
+  .btn-del { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; padding: 4px 6px; border-radius: 6px; }
+  .btn-del:active { color: var(--accent); }
+  .qty-edit { width: 50px; text-align: center; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 3px; font-family: 'DM Mono', monospace; font-size: 0.79rem; background: var(--bg); color: var(--text); outline: none; }
+  .totali-box { background: var(--surface); border-radius: 14px; padding: 15px; border: 1px solid var(--border); box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 12px; }
+  .totali-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .totali-row:last-child { border-bottom: none; }
+  .totali-row .lbl { color: var(--muted); font-size: 0.88rem; }
+  .totali-row .val { font-family: 'DM Mono', monospace; font-size: 0.92rem; }
+  .grand-row { background: var(--primary); border-radius: 10px; padding: 13px 14px; margin-top: 8px; }
+  .grand-row .lbl { color: rgba(255,255,255,0.65); font-size: 0.88rem; font-weight: 600; }
+  .grand-row .val { color: white; font-size: 1.15rem; font-weight: 700; }
+  .actions { display: flex; gap: 10px; margin-bottom: 22px; }
+  .btn-pdf { flex: 1; background: var(--primary); color: white; border: none; border-radius: 12px; padding: 15px; font-size: 0.93rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .btn-copia { flex: 1; background: var(--accent2); color: white; border: none; border-radius: 12px; padding: 15px; font-size: 0.93rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .hint-box { font-size: 0.75rem; color: var(--orange); margin-top: 6px; min-height: 16px; font-weight: 600; }
+  .install-banner { background: linear-gradient(135deg, #457b9d, #1a1a2e); color: white; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .ib-icon { font-size: 1.6rem; }
+  .ib-text { flex: 1; font-size: 0.82rem; line-height: 1.4; }
+  .ib-text strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+  .ib-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 1.2rem; cursor: pointer; padding: 4px; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 11px 22px; border-radius: 30px; font-size: 0.86rem; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  @media print {
+    header, .search-section, .actions, .btn-del, .btn-clear, .hint-box, .install-banner { display: none !important; }
+    body { background: white; }
+    .print-header { display: block !important; }
+  }
+  .print-header { display: none; text-align: center; margin-bottom: 20px; }
+  .print-header h1 { font-size: 1.3rem; color: var(--primary); }
+  .print-header p { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 <span>i</span>Preventivo Deca Davide</h1>
+  <sub>Listino 2026</sub>
+</header>
+<div class="container">
+  <div class="print-header">
+    <h1>PREVENTIVO — Deca Davide</h1>
+    <p id="print-date"></p>
+  </div>
+  <div class="install-banner" id="installBanner">
+    <div class="ib-icon">📲</div>
+    <div class="ib-text">
+      <strong>Installa come app offline</strong>
+      Tocca <strong>⬆ Condividi</strong> → <strong>"Aggiungi a schermata Home"</strong>
+    </div>
+    <button class="ib-close" onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+  </div>
+  <div class="search-section">
+    <div class="section-label">Aggiungi Articolo</div>
+    <div class="search-row">
+      <div class="search-wrapper">
+        <input type="text" class="search-input" id="searchInput" placeholder="Cerca per codice o descrizione…" autocomplete="off" />
+        <div class="suggestions" id="suggestions" style="display:none"></div>
+      </div>
+      <input type="number" class="qty-input" id="qtyInput" placeholder="Qtà" min="1" inputmode="numeric" />
+      <button class="btn-add" onclick="addSelectedArticle()">+ Add</button>
+    </div>
+    <div class="hint-box" id="hintBox"></div>
+  </div>
+  <div class="preventivo-section">
+    <div class="prev-header">
+      <div class="section-label" style="margin-bottom:0">Articoli nel Preventivo</div>
+      <button class="btn-clear" onclick="clearAll()">Svuota tutto</button>
+    </div>
+    <div id="tableContainer">
+      <div class="empty-state"><div class="icon">📦</div><div>Nessun articolo ancora.<br>Cerca e aggiungi un prodotto.</div></div>
+    </div>
+  </div>
+  <div class="totali-box" id="totaliBox" style="display:none">
+    <div class="totali-row"><span class="lbl">Imponibile</span><span class="val" id="tot-imponibile">0,00 €</span></div>
+    <div class="totali-row"><span class="lbl">IVA (22%)</span><span class="val" id="tot-iva">0,00 €</span></div>
+    <div class="totali-row grand-row"><span class="lbl">TOTALE CON IVA</span><span class="val" id="tot-finale">0,00 €</span></div>
+  </div>
+  <div class="actions" id="actionsBox" style="display:none">
+    <button class="btn-pdf" onclick="window.print()">🖨️ Stampa / PDF</button>
+    <button class="btn-copia" onclick="copiaTesto()">📋 Copia testo</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// Nascondi banner se già installata
+if (window.navigator.standalone === true) {
+  document.getElementById('installBanner').style.display = 'none';
+}
+
+// Service Worker con percorso corretto per GitHub Pages
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => console.log('SW ok', reg.scope))
+      .catch(err => console.log('SW errore', err));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('print-date').textContent = 'Data: ' + new Date().toLocaleDateString('it-IT');
+});
+
+const listino = [
+  { codice:"2004",      descrizione:"INCONTRO ASTE R/40 ALLCO 5",              um:"Pz",  prezzo:0.21,   qMin:100  },
+  { codice:"2002",      descrizione:"CATENACCIO PARTENOPE R/40",                um:"Cp",  prezzo:1.19,   qMin:50   },
+  { codice:"2003",      descrizione:"TERMINALE PARTENOPE R/40",                 um:"Cp",  prezzo:0.602,  qMin:150  },
+  { codice:"2014",      descrizione:"INCONTRO SERRATURA SERIE R/40",            um:"Pz",  prezzo:0.308,  qMin:200  },
+  { codice:"2015",      descrizione:"TASSELLO DI RACCORDO SERIE R/40",          um:"Pz",  prezzo:0.154,  qMin:null },
+  { codice:"20221013",  descrizione:"CRICCHETTO IN NYLON EUROPA 1013",          um:"Pz",  prezzo:0.756,  qMin:20   },
+  { codice:"20231013",  descrizione:"CRICCHETTO IN ALLUMINIO RAPID 1013",       um:"Pz",  prezzo:2.38,   qMin:null },
+  { codice:"2102",      descrizione:"INCONTRO ASTA C/E",                        um:"Pz",  prezzo:0.28,   qMin:null },
+  { codice:"2100",      descrizione:"AGGANCIO ASTA CAVA 20",                    um:"Cp",  prezzo:1.19,   qMin:null },
+  { codice:"2106",      descrizione:"TASSELLO DI RACCORDO X C/E",               um:"Cp",  prezzo:0.154,  qMin:null },
+  { codice:"22261013",  descrizione:"CERNIERA X SCURETTO ALL/1013",             um:"Pz",  prezzo:1.54,   qMin:null },
+  { codice:"2226ACC",   descrizione:"CERNIERA X SCURETTO ACCIAIO",              um:"Pz",  prezzo:3.64,   qMin:null },
+  { codice:"2226BRO",   descrizione:"CERNIERA X SCURETTO BRONZO",               um:"Pz",  prezzo:2.10,   qMin:null },
+  { codice:"2226RO",    descrizione:"CERNIERA X SCURETTO ORO",                  um:"Pz",  prezzo:2.94,   qMin:null },
+  { codice:"2226AR",    descrizione:"CERNIERA X SCURETTO ARGENTO",              um:"Pz",  prezzo:2.10,   qMin:null },
+  { codice:"22271013",  descrizione:"DOPPIA MANIGLIA DECA 1013",                um:"Cp",  prezzo:2.52,   qMin:null },
+  { codice:"22279005",  descrizione:"DOPPIA MANIGLIA DECA 9005",                um:"Pz",  prezzo:2.52,   qMin:10   },
+  { codice:"2012",      descrizione:"SQUADRETTA RIALLINEAMENTO SERIE R/40",     um:"Pz",  prezzo:0.042,  qMin:200  },
+  { codice:"2207",      descrizione:"DISTANZIALI PER PERSIANA FISSA GR9",       um:"Cp",  prezzo:0.098,  qMin:200  },
+  { codice:"2209",      descrizione:"MANIGLIA SCORREVOLE EXPORT 60 NERA",       um:"Pz",  prezzo:1.26,   qMin:50   },
+  { codice:"2006",      descrizione:"TAPPO DI RIPORTO SERIE R/40",              um:"Pz",  prezzo:0.42,   qMin:50   },
+  { codice:"2028",      descrizione:"TAPPO PERSIANA PROFILO 800747",            um:"Cp",  prezzo:0.322,  qMin:100  },
+  { codice:"2022",      descrizione:"CRICCHETTO NYLON EUROPA 9005",             um:"Pz",  prezzo:0.756,  qMin:100  },
+  { codice:"2404",      descrizione:"TAPPO CHIUDIFORO MM 12 9010",              um:"Cf",  prezzo:9.10,   qMin:10   },
+  { codice:"2226 9010", descrizione:"CERNIERA X SCURETTO 9010",                 um:"Pz",  prezzo:1.54,   qMin:50   },
+  { codice:"2300",      descrizione:"SQUADRETTA ZANZARIERA SIMMETRICA",         um:"Pz",  prezzo:0.224,  qMin:100  },
+  { codice:"2301",      descrizione:"SQUADRETTA X ZANZARIERA ASIMMETRICA",      um:"Pz",  prezzo:0.224,  qMin:100  },
+  { codice:"2020",      descrizione:"SELLA OVALINA FISSA",                      um:"Pz",  prezzo:0.0588, qMin:250  },
+  { codice:"2248",      descrizione:"CHIUSURA RAPIDA CON CILINDRO",             um:"Pz",  prezzo:7.77,   qMin:10   },
+];
+
+let carrello = [], selectedArticle = null;
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  selectedArticle = null;
+  document.getElementById('hintBox').textContent = '';
+  if (q.length < 1) { hideSug(); return; }
+  showSug(listino.filter(a => a.codice.toLowerCase().includes(q) || a.descrizione.toLowerCase().includes(q)).slice(0,9));
+});
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addSelectedArticle();
+  if (e.key === 'Escape') hideSug();
+});
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrapper')) hideSug(); });
+document.addEventListener('touchstart', e => { if (!e.target.closest('.search-wrapper')) hideSug(); }, {passive:true});
+
+function showSug(res) {
+  const el = document.getElementById('suggestions');
+  if (!res.length) { el.style.display = 'none'; return; }
+  el.innerHTML = res.map(a => `
+    <div class="suggestion-item" onclick="selectArticle('${a.codice}')">
+      <span class="s-code">${a.codice}</span>
+      <span class="s-name">${a.descrizione}</span>
+      <span class="s-price">${fmt(a.prezzo)} €/${a.um}</span>
+      <span class="s-min">${a.qMin ? 'min ' + a.qMin : ''}</span>
+    </div>`).join('');
+  el.style.display = 'block';
+}
+function hideSug() { document.getElementById('suggestions').style.display = 'none'; }
+
+function selectArticle(codice) {
+  selectedArticle = listino.find(a => a.codice === codice);
+  document.getElementById('searchInput').value = `${selectedArticle.codice} — ${selectedArticle.descrizione}`;
+  hideSug();
+  const qEl = document.getElementById('qtyInput');
+  if (selectedArticle.qMin) {
+    qEl.value = selectedArticle.qMin;
+    document.getElementById('hintBox').textContent = `⚠️ Quantità minima: ${selectedArticle.qMin} ${selectedArticle.um}`;
+  } else {
+    qEl.value = 1;
+    document.getElementById('hintBox').textContent = '';
+  }
+  qEl.focus();
+}
+
+function addSelectedArticle() {
+  if (!selectedArticle) {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    selectedArticle = listino.find(a => a.codice.toLowerCase() === q || a.codice.toLowerCase().includes(q)) || null;
+  }
+  if (!selectedArticle) { showToast('⚠️ Seleziona un articolo'); return; }
+  let qty = parseInt(document.getElementById('qtyInput').value) || 1;
+  if (selectedArticle.qMin && qty < selectedArticle.qMin) {
+    if (!confirm(`Quantità minima: ${selectedArticle.qMin} ${selectedArticle.um}.\nContinuare con ${qty}?`)) return;
+  }
+  const ex = carrello.find(c => c.codice === selectedArticle.codice);
+  if (ex) { ex.qty += qty; } else { carrello.push({...selectedArticle, qty}); }
+  document.getElementById('searchInput').value = '';
+  document.getElementById('qtyInput').value = '';
+  document.getElementById('hintBox').textContent = '';
+  selectedArticle = null;
+  renderCarrello();
+  showToast('✓ Articolo aggiunto');
+}
+
+function removeItem(codice) { carrello = carrello.filter(c => c.codice !== codice); renderCarrello(); }
+
+function updateQty(codice, val) {
+  const item = carrello.find(c => c.codice === codice);
+  if (!item) return;
+  item.qty = parseInt(val) || 1;
+  const el = document.getElementById('t-' + codice.replace(/\s/g,'_'));
+  if (el) el.textContent = fmt(item.prezzo * item.qty) + ' €';
+  renderTotali();
+}
+
+function clearAll() {
+  if (!carrello.length) return;
+  if (confirm('Svuotare il preventivo?')) { carrello = []; renderCarrello(); }
+}
+
+function renderCarrello() {
+  const c = document.getElementById('tableContainer');
+  const tb = document.getElementById('totaliBox');
+  const ab = document.getElementById('actionsBox');
+  if (!carrello.length) {
+    c.innerHTML = `<div class="empty-state"><div class="icon">📦</div><div>Nessun articolo ancora.</div></div>`;
+    tb.style.display = 'none'; ab.style.display = 'none'; return;
+  }
+  c.innerHTML = `<table>
+    <thead><tr><th>Cod.</th><th>Descrizione</th><th class="r">Qtà</th><th class="r">Prezzo</th><th class="r">Totale</th><th></th></tr></thead>
+    <tbody>${carrello.map(item => {
+      const id = item.codice.replace(/\s/g,'_');
+      return `<tr>
+        <td class="td-code">${item.codice}</td>
+        <td style="font-size:0.79rem">${item.descrizione}</td>
+        <td class="r"><input type="number" class="qty-edit" value="${item.qty}" min="1" inputmode="numeric" onchange="updateQty('${item.codice}',this.value)"></td>
+        <td class="td-price r">${fmt(item.prezzo)}&nbsp;€</td>
+        <td class="td-total r" id="t-${id}">${fmt(item.prezzo*item.qty)}&nbsp;€</td>
+        <td class="r"><button class="btn-del" onclick="removeItem('${item.codice}')">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  tb.style.display = 'block'; ab.style.display = 'flex';
+  renderTotali();
+}
+
+function renderTotali() {
+  const imp = carrello.reduce((s,i) => s + i.prezzo * i.qty, 0);
+  const iva = imp * 0.22;
+  document.getElementById('tot-imponibile').textContent = fmt(imp) + ' €';
+  document.getElementById('tot-iva').textContent = fmt(iva) + ' €';
+  document.getElementById('tot-finale').textContent = fmt(imp + iva) + ' €';
+}
+
+function fmt(n) { return parseFloat(n).toFixed(2).replace('.', ','); }
+
+function copiaTesto() {
+  const imp = carrello.reduce((s,i) => s + i.prezzo*i.qty, 0);
+  const iva = imp * 0.22;
+  const d = new Date().toLocaleDateString('it-IT');
+  let t = `PREVENTIVO — Deca Davide — ${d}\n${'─'.repeat(58)}\n`;
+  carrello.forEach(i => {
+    t += `${i.codice.padEnd(12)} ${i.descrizione.substring(0,30).padEnd(30)} ${String(i.qty).padStart(5)} ${fmt(i.prezzo).padStart(7)} ${fmt(i.prezzo*i.qty).padStart(8)} €\n`;
+  });
+  t += `${'─'.repeat(58)}\nImponibile:     ${fmt(imp)} €\nIVA (22%):      ${fmt(iva)} €\nTOTALE CON IVA: ${fmt(imp+iva)} €\n`;
+  navigator.clipboard.writeText(t).then(() => showToast('✓ Copiato!')).catch(() => showToast('✓ Pronto'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
