@@ -1,5 +1,5 @@
 const CACHE_NAME = 'ipreventivo-v2';
-const BASE = '/iPreventivo-Deca-Davide-v1.0';
+const BASE = '/iPreventivo-Deca-Davide-V2';
 const ASSETS = [
   BASE + '/',
   BASE + '/index.html',
